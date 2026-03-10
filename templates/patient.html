@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Patient {{ patient.id }}</title>
+{% endblock %}
+
+{% block body %}
+
+<h1>Patient Record</h1>
+
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>ID</td><td>{{ patient.id }}</td></tr>
+<tr><td>Sex</td><td>{{ patient.sex }}</td></tr>
+<tr><td>Age</td><td>{{ patient.age }}</td></tr>
+<tr><td>Diagnosis</td><td>{{ patient.diagnosis }}</td></tr>
+<tr><td>Allergies</td><td>{{ patient.allergies or "None" }}</td></tr>
+<tr><td>Weight</td><td>{{ patient.weight }} kg</td></tr>
+<tr><td>Height</td><td>{{ patient.height }} cm</td></tr>
+<tr><td>Medical History</td><td>{{ patient.medical_history or "None" }}</td></tr>
+</table>
+
+<hr>
+
+<h2>Calculate Optimal Dosage</h2>
+
+<form action="/calculate_dose" method="post">
+
+<input type="hidden" name="patient_id" value="{{ patient.id }}">
+
+<label>Select Drug:</label><br>
+
+<select name="drug_type">
+
+{% for key, profile in drugs.items() %}
+<option value="{{ key }}">{{ profile.name }}</option>
+{% endfor %}
+
+</select>
+
+<br><br>
+
+<button type="submit">Calculate Dose</button>
+
+</form>
+
+{% if dosage_result %}
+
+<hr>
+
+<h2>Dosage Recommendation</h2>
+
+<table>
+<tr><th>Drug</th><td>{{ dosage_result.drug_name }}</td></tr>
+<tr><th>Recommended Dose</th><td>{{ dosage_result.recommended_dose }} mg</td></tr>
+<tr><th>Frequency</th><td>{{ dosage_result.frequency }}</td></tr>
+<tr><th>Notes</th><td>{{ dosage_result.notes }}</td></tr>
+</table>
+
+{% if dosage_result.warnings %}
+
+<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin-top:10px">
+
+<strong>Warnings:</strong>
+
+<ul>
+{% for w in dosage_result.warnings %}
+<li>{{ w }}</li>
+{% endfor %}
+</ul>
+
+</div>
+
+{% endif %}
+
+{% endif %}
+
+<br><br>
+
+<a href="/">← Back</a>
+
+{% endblock %}
