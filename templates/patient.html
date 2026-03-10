@@ -28,16 +28,17 @@
 
 <input type="hidden" name="patient_id" value="{{ patient.id }}">
 
-<label>Select Drug:</label><br>
+<label for="drug_search">Select Drug:</label><br>
 
-<select name="drug_type">
+<input type="text" id="drug_search" placeholder="Type to search..." autocomplete="off" required>
 
+<select name="drug_type" id="drug_select" style="display:none;">
 {% for key, profile in drugs.items() %}
 <option value="{{ key }}">{{ profile.name }}</option>
 {% endfor %}
-
 </select>
 
+<div id="drug_list" class="autocomplete-items" style="border:1px solid #ccc;max-height:150px;overflow-y:auto;position:absolute;background:white;z-index:1000;"></div>
 <br><br>
 
 <button type="submit">Calculate Dose</button>
