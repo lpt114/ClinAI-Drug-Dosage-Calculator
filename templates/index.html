@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+
 {% block head %}
 <title>ClinAI</title>
 {% endblock %}
+
 {% block body %}
 
 <h1>ClinAI</h1>
@@ -46,7 +48,7 @@
 <div class="form-row">
 <label>Weight:</label>
 
-<input type="number" id="weight_input" step="0.1" class="small-input" required>
+<input type="number" id="weight_input" step="0.1" class="small-input" required min="0">
 
 <select id="weight_unit" class="unit-select">
 <option value="kg">kg</option>
@@ -60,11 +62,11 @@
 <div class="form-row">
 <label>Height:</label>
 
-<input type="number" id="height_ft" placeholder="ft" class="tiny-input">
+<input type="number" id="height_ft" placeholder="ft" class="tiny-input" min= "0">
 
-<input type="number" id="height_in" placeholder="in" class="tiny-input">
+<input type="number" id="height_in" placeholder="in" class="tiny-input" min= "0" max= "11">
 
-<input type="number" id="height_cm_input" placeholder="cm" class="tiny-input" style="display:none;">
+<input type="number" id="height_cm_input" placeholder="cm" class="tiny-input" style="display:none;" min="0">
 
 <select id="height_unit" class="unit-select" onchange="toggleHeightUnit()">
 <option value="ft">ft/in</option>
