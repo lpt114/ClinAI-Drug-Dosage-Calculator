@@ -1,95 +1,148 @@
-{%extends "base.html" %}
+{% extends "base.html" %}
+{% block head %}
+<title>ClinAI</title>
+{% endblock %}
+{% block body %}
 
-{%block head %}
-<title>ClinAI - Your AI-powered Clinical Assistant</title>
-{%endblock%}
+<h1>ClinAI</h1>
 
-{%block body %}
-<div class="container">
-    <h1>Welcome to ClinAI</h1>
-    <p>Your AI-powered clinical assistant for healthcare professionals.</p>
+<h2>Search Patient by ID</h2>
 
-    <!-- Error messages -->
-    {% if error %}
-    <p style="color: red;"><strong>{{ error }}</strong></p>
-    {% endif %}
+<form action="/search_patient" method="post">
+    <input type="number" name="patient_id" min="1" placeholder="Enter patient ID" required>
+    <button type="submit">Search</button>
+</form>
 
-    <!-- ── Search by patient ID ── -->
-    <h2>Search Patient by ID</h2>
-    <form action="/search_patient" method="post">
-        <input type="number" name="patient_id" placeholder="Enter patient ID" required>
-        <button type="submit">Search</button>
-    </form>
+<hr>
 
-    <!-- ── Patient record (only shown after a search) ── -->
-    {% if found_patient %}
-    <h2>Patient Record — ID: {{ found_patient.id }}</h2>
-    <table border="1" cellpadding="8" cellspacing="0">
-        <tr><th>Field</th><th>Value</th></tr>
-        <tr><td>ID</td><td>{{ found_patient.id }}</td></tr>
-        <tr><td>Sex</td><td>{{ found_patient.sex }}</td></tr>
-        <tr><td>Age</td><td>{{ found_patient.age }}</td></tr>
-        <tr><td>Diagnosis</td><td>{{ found_patient.diagnosis }}</td></tr>
-        <tr><td>Allergies</td><td>{{ found_patient.allergies or "None" }}</td></tr>
-        <tr><td>Weight (kg)</td><td>{{ found_patient.weight }}</td></tr>
-        <tr><td>Height (cm)</td><td>{{ found_patient.height }}</td></tr>
-        <tr><td>Medical History</td><td>{{ found_patient.medical_history or "None" }}</td></tr>
-    </table>
-    {% endif %}
+<h2>Add New Patient</h2>
 
-    <!-- ── Dosage result (only shown after Calculate Dose) ── -->
-    {% if dosage_result %}
-    <h2>Dosage Recommendation</h2>
-    <table border="1" cellpadding="8" cellspacing="0">
-        <tr><th>Field</th><th>Value</th></tr>
-        <tr><td>Drug</td><td>{{ dosage_result.drug_name }}</td></tr>
-        <tr><td>Recommended Single Dose</td><td><strong>{{ dosage_result.recommended_dose }} mg</strong></td></tr>
-        <tr><td>Frequency</td><td>{{ dosage_result.frequency }}</td></tr>
-        <tr><td>Notes</td><td>{{ dosage_result.notes }}</td></tr>
-    </table>
+<form action="/add_patient" method="post" onsubmit="convertUnits()">
 
-    {% if dosage_result.warnings %}
-    <div style="background:#fff3cd; border:1px solid #ffc107; padding:10px; margin-top:10px; border-radius:4px;">
-        <strong>Clinical Warnings:</strong>
-        <ul>
-        {% for w in dosage_result.warnings %}
-            <li>{{ w }}</li>
-        {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    {% endif %}
+<div class="form-row">
+<label>Age:</label>
+<input type="number" name="age" min="0" max="120" required>
+</div>
 
-    <!-- ── Drug selection + dosage calculator ── -->
-    <h2>Calculate Optimal Dosage</h2>
-    <form action="/calculate_dose" method="post">
-        <label>Patient ID:</label><br>
-        <input type="number" name="patient_id"
-               value="{{ found_patient.id if found_patient else '' }}"
-               placeholder="Enter patient ID" required><br><br>
+<div class="form-row">
+<label>Sex:</label>
+<select name="sex" required>
+<option value="">Select</option>
+<option value="Male">Male</option>
+<option value="Female">Female</option>
+</select>
+</div>
 
-        <label for="drug_type">Select Drug:</label><br>
-        <select name="drug_type" id="drug_type" required>
-            {% for key, profile in drugs.items() %}
-            <option value="{{ key }}">{{ profile.name }}</option>
-            {% endfor %}
-        </select><br><br>
+<div class="form-row">
+<label>Diagnosis:</label>
+<input type="text" name="diagnosis" required>
+</div>
 
-        <button type="submit">Calculate Dose</button>
-    </form>
+<div class="form-row">
+<label>Allergies:</label>
+<input type="text" name="allergies">
+</div>
 
-    <!-- ── Add new patient ── -->
-    <h2>Add New Patient</h2>
-    <form action="/add_patient" method="post">
-        <input type="number" name="age" placeholder="Age" required><br><br>
-        <input type="text" name="sex" placeholder="Sex (e.g. Male / Female)" required><br><br>
-        <input type="text" name="diagnosis" placeholder="Diagnosis" required><br><br>
-        <input type="text" name="allergies" placeholder="Allergies (if any)"><br><br>
-        <input type="number" step="0.1" name="weight" placeholder="Weight (kg)" required><br><br>
-        <input type="number" step="0.1" name="height" placeholder="Height (cm)" required><br><br>
-        <textarea name="medical_history" placeholder="Medical history / notes" rows="4" cols="40"></textarea><br><br>
-        <button type="submit">Add Patient</button>
-    </form>
+<div class="form-row">
+<label>Weight:</label>
+
+<input type="number" id="weight_input" step="0.1" class="small-input" required>
+
+<select id="weight_unit" class="unit-select">
+<option value="kg">kg</option>
+<option value="lb">lb</option>
+</select>
+
+<input type="hidden" name="weight" id="weight_kg">
 
 </div>
-{%endblock%}
+
+<div class="form-row">
+<label>Height:</label>
+
+<input type="number" id="height_ft" placeholder="ft" class="tiny-input">
+
+<input type="number" id="height_in" placeholder="in" class="tiny-input">
+
+<input type="number" id="height_cm_input" placeholder="cm" class="tiny-input" style="display:none;">
+
+<select id="height_unit" class="unit-select" onchange="toggleHeightUnit()">
+<option value="ft">ft/in</option>
+<option value="cm">cm</option>
+</select>
+
+<input type="hidden" name="height" id="height_cm">
+
+</div>
+
+<div class="form-row">
+<label>Medical history:</label>
+<textarea name="medical_history"></textarea>
+</div>
+
+<button type="submit">Add Patient</button>
+
+</form>
+
+<script>
+function toggleHeightUnit(){
+
+let unit = document.getElementById("height_unit").value;
+
+let ft = document.getElementById("height_ft");
+let inch = document.getElementById("height_in");
+let cm = document.getElementById("height_cm_input");
+
+if(unit === "cm"){
+
+ft.style.display="none";
+inch.style.display="none";
+cm.style.display="block";
+
+}else{
+
+ft.style.display="block";
+inch.style.display="block";
+cm.style.display="none";
+
+}
+
+}
+
+function convertUnits(){
+
+let weight = parseFloat(document.getElementById("weight_input").value);
+let weightUnit = document.getElementById("weight_unit").value;
+
+let weightKg = weight;
+
+if(weightUnit === "lb"){
+weightKg = weight * 0.453592;
+}
+
+document.getElementById("weight_kg").value = weightKg.toFixed(2);
+
+
+let heightUnit = document.getElementById("height_unit").value;
+
+let cm;
+
+if(heightUnit === "cm"){
+
+cm = parseFloat(document.getElementById("height_cm_input").value);
+
+}else{
+
+let ft = parseFloat(document.getElementById("height_ft").value) || 0;
+let inches = parseFloat(document.getElementById("height_in").value) || 0;
+
+cm = ((ft * 12) + inches) * 2.54;
+
+}
+
+document.getElementById("height_cm").value = cm.toFixed(1);
+
+}
+</script>
+
+{% endblock %}
