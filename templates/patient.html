@@ -1,83 +1,159 @@
 {% extends "base.html" %}
 
-{% block head %}
-<title>Patient {{ patient.id }}</title>
-{% endblock %}
+{% block head %}<title>Patient {{ patient.id }} — ClinAI</title>{% endblock %}
 
 {% block body %}
 
-<h1>Patient Record</h1>
+<a href="/" class="back-link">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  Back to Home
+</a>
 
-<table>
-<tr><th>Patient Information</th><th>Description</th></tr>
-<tr><td>ID</td><td>{{ patient.id }}</td></tr>
-<tr><td>Sex</td><td>{{ patient.sex }}</td></tr>
-<tr><td>Age</td><td>{{ patient.age }}</td></tr>
-<tr><td>Diagnosis</td><td>{{ patient.diagnosis }}</td></tr>
-<tr><td>Allergies</td><td>{{ patient.allergies or "None" }}</td></tr>
-<tr><td>Weight</td><td>{{ patient.weight }} kg</td></tr>
-<tr><td>Height</td><td>{{ patient.height }} cm</td></tr>
-<tr><td>Medical History</td><td>{{ patient.medical_history or "None" }}</td></tr>
-</table>
+<p class="page-title">Patient Record</p>
+<div class="pid-badge">ID #{{ patient.id }}</div>
 
-<hr>
+<!-- Patient info -->
+<div class="section-title">Demographics &amp; Clinical Details</div>
+<div class="card">
+  <table>
+    <thead><tr><th style="width:200px;">Field</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Sex</td><td>{{ patient.sex }}</td></tr>
+      <tr><td>Age</td><td>{{ patient.age }} years
+        {% if patient.age >= 65 %}<span class="tag tag-warn" style="margin-left:8px;">≥65 · dose adjusted</span>{% endif %}
+        {% if patient.age < 18 %}<span class="tag tag-warn" style="margin-left:8px;">Paediatric</span>{% endif %}
+      </td></tr>
+      <tr><td>Weight</td><td>{{ patient.weight }} kg</td></tr>
+      <tr><td>Height</td><td>{{ patient.height }} cm</td></tr>
+      <tr><td>Diagnosis</td><td>{{ patient.diagnosis }}</td></tr>
+      <tr><td>Allergies</td><td>{{ patient.allergies or "None reported" }}</td></tr>
+      <tr><td>Medical History</td><td>{{ patient.medical_history or "None reported" }}</td></tr>
+    </tbody>
+  </table>
 
-<h2>Calculate Optimal Dosage</h2>
+  <div class="action-row" style="margin-top:20px;">
+    <a class="btn btn-ghost btn-sm" href="/patient/{{ patient.id }}/edit">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit Record
+    </a>
+    <form action="/patient/{{ patient.id }}/delete" method="post" onsubmit="return confirm('Permanently delete this patient record?');" style="margin:0;">
+      <button class="btn btn-danger btn-sm" type="submit">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete Patient
+      </button>
+    </form>
+  </div>
+</div>
 
-<form action="/calculate_dose" method="post">
+<hr class="divider">
 
-<input type="hidden" name="patient_id" value="{{ patient.id }}">
+<!-- Drug calculator -->
+<div class="section-title">Dosage Calculator</div>
+<div class="card">
+  <form action="/calculate_dose" method="post">
+    <input type="hidden" name="patient_id" value="{{ patient.id }}">
 
-<label for="drug_search">Select Drug:</label><br>
+    <div class="form-group" style="position:relative;">
+      <label>
+        Select Drug
+      </label>
+      <div class="input-wrap" style="position:relative;width:100%;">
+        <input type="text" id="drug_search" placeholder="Type to search drugs…" autocomplete="off" required style="max-width:360px;">
+        <select name="drug_type" id="drug_select" style="display:none;">
+          {% for key, profile in drugs.items() %}
+          <option value="{{ key }}">{{ profile.name }}</option>
+          {% endfor %}
+        </select>
+        <div id="drug_list"></div>
+      </div>
+    </div>
 
-<input type="text" id="drug_search" placeholder="Type to search..." autocomplete="off" required>
-
-<select name="drug_type" id="drug_select" style="display:none;">
-{% for key, profile in drugs.items() %}
-<option value="{{ key }}">{{ profile.name }}</option>
-{% endfor %}
-</select>
-
-<div id="drug_list" class="autocomplete-items" style="border:1px solid #ccc;max-height:150px;overflow-y:auto;position:absolute;background:white;z-index:1000;"></div>
-<br><br>
-
-<button type="submit">Calculate Dose</button>
-
-</form>
+    <div class="action-row" style="margin-top:4px;">
+      <button class="btn" type="submit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Calculate Dose
+      </button>
+      <span style="font-size:12px;color:var(--muted);font-family:var(--mono);">
+        Available:
+        {% for key, profile in drugs.items() %}
+          <a href="/drug/{{ key }}" style="color:var(--accent);text-decoration:none;margin-right:6px;">{{ profile.name }}</a>
+        {% endfor %}
+      </span>
+    </div>
+  </form>
+</div>
 
 {% if dosage_result %}
 
-<hr>
+<hr class="divider">
 
-<h2>Dosage Recommendation</h2>
+<!-- Result -->
+<div class="section-title">Recommendation</div>
+<div class="card">
 
-<table>
-<tr><th>Drug</th><td>{{ dosage_result.drug_name }}</td></tr>
-<tr><th>Recommended Dose</th><td>{{ dosage_result.recommended_dose }} mg</td></tr>
-<tr><th>Frequency</th><td>{{ dosage_result.frequency }}</td></tr>
-<tr><th>Notes</th><td>{{ dosage_result.notes }}</td></tr>
-</table>
+  <div class="result-drug">{{ dosage_result.drug_name }}</div>
 
-{% if dosage_result.warnings %}
+  <div class="dose-pill">
+    <span class="dose-value">{{ dosage_result.recommended_dose }}</span>
+    <span class="dose-unit">mg</span>
+  </div>
 
-<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin-top:10px">
+  <table>
+    <tbody>
+      <tr><td>Frequency</td><td>{{ dosage_result.frequency }}</td></tr>
+      <tr><td>Clinical Notes</td><td>{{ dosage_result.notes }}</td></tr>
+    </tbody>
+  </table>
 
-<strong>Warnings:</strong>
+  {% if dosage_result.warnings %}
+  <div class="warning-box">
+    <div style="color:var(--warn);font-size:16px;flex-shrink:0;margin-top:2px;">⚠</div>
+    <ul>{% for w in dosage_result.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
 
-<ul>
-{% for w in dosage_result.warnings %}
-<li>{{ w }}</li>
-{% endfor %}
-</ul>
+  <!-- Explanation steps -->
+  {% if dosage_result.steps %}
+  <div style="margin-top:24px;">
+    <div class="section-title" style="margin-bottom:8px;">How This Dose Was Calculated</div>
+    <ul class="steps-list">
+      {% for step in dosage_result.steps %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
 </div>
-
 {% endif %}
 
+<!-- Dose history -->
+{% if patient.dose_logs %}
+<hr class="divider">
+<div class="section-title">Dose History</div>
+<div class="card">
+  {% for log in patient.dose_logs %}
+  <div class="log-entry">
+    <div>
+      <div class="log-drug">{{ log.drug_name }}</div>
+      <div class="log-time">{{ log.timestamp.strftime('%b %d, %Y · %H:%M UTC') }}</div>
+      {% if log.warnings %}
+      <div style="margin-top:6px;">
+        {% for w in log.warnings.split('|') %}
+        <span class="tag tag-warn" style="margin-right:4px;margin-top:4px;display:inline-block;">⚠ warning</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div style="text-align:right;">
+      <div class="log-dose">{{ log.dose_mg | int }} mg</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">{{ log.frequency }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 
-<br><br>
 
-<a href="/">← Back</a>
 
 {% endblock %}
