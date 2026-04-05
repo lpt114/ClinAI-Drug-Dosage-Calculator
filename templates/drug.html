@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block head %}<title>{{ profile.name }} — ClinAI</title>{% endblock %}
+
+{% block body %}
+
+<a href="/" class="back-link">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  Back to Home
+</a>
+
+<p class="page-title">{{ profile.name }}</p>
+
+<div class="section-title">Dosing Parameters</div>
+<div class="card">
+  <table>
+    <tbody>
+      {% if profile.tuning.dose_per_kg is defined %}
+      <tr>
+        <td>Base Dose</td>
+        <td>{{ profile.tuning.dose_per_kg }} mg / kg body weight</td>
+      </tr>
+      {% elif profile.flat_dose %}
+      <tr>
+        <td>Starting Dose</td>
+        <td>{{ profile.flat_dose }} mg (flat, not weight-based)</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Max Single Dose</td>
+        <td>{{ profile.tuning.max_single_dose }} mg</td>
+      </tr>
+      {% if profile.tuning.daily_max is defined %}
+      <tr>
+        <td>Max Daily Dose</td>
+        <td>{{ profile.tuning.daily_max }} mg</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Frequency</td>
+        <td>{{ profile.frequency }}</td>
+      </tr>
+      <tr>
+        <td>Renal Adjustment</td>
+        <td>
+          {% if profile.renal_adjustment %}
+            <span class="tag tag-warn">Required</span>
+          {% else %}
+            <span class="tag tag-ok">Not required</span>
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section-title">Clinical Notes</div>
+<div class="card">
+  <p style="font-size:14px;color:var(--label);line-height:1.7;">{{ profile.notes }}</p>
+</div>
+
+{% if profile.contraindications %}
+<div class="section-title">Contraindication Keywords</div>
+<div class="card">
+  <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+    A match for these terms triggers a warning on the dose result:
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for c in profile.contraindications %}
+    <span class="tag tag-warn">{{ c }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="section-title">Drug Parameters</div>
+<div class="card">
+  <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+    Here is info & var, ensure accuracy first:
+  </p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+    <tbody>
+      {% for k, v in profile.tuning.items() %}
+      <tr>
+        <td><code style="font-family:var(--mono);font-size:12px;">{{ k }}</code></td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--accent2);">{{ v }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
