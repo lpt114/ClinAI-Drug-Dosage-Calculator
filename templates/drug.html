@@ -52,6 +52,17 @@
       </tr>
     </tbody>
   </table>
+  <h3>Recommended Dose: {{ dose }} mg</h3>
+
+<p>Base Dose: {{ base_dose }} mg</p>
+<p>Adjustment Factor: {{ adjustment }}</p>
+
+<h4>Explanation:</h4>
+<ul>
+  {% for item in explanation %}
+    <li>{{ item }}</li>
+  {% endfor %}
+</ul>
 </div>
 
 <div class="section-title">Clinical Notes</div>
