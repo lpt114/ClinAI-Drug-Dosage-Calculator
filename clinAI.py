@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from ml_model import predict_dose
 
 app = Flask(__name__)
 
@@ -325,7 +326,33 @@ def calculate_dose():
     if drug_type not in DRUG_PROFILES:
         return render_template("error.html", message=f"Unknown drug '{drug_type}'.")
 
-    result = calculate_dosage(drug_type, patient)
+    #result = calculate_dosage(drug_type, patient)
+    if drug_type == "vancomycin":
+        # Get ML inputs from form
+        age = float(request.form.get("age"))
+        weight = float(request.form.get("weight"))
+        creatinine = float(request.form.get("creatinine"))
+        egfr = float(request.form.get("egfr"))
+
+        dose, base_dose, adjustment, explanation = predict_dose(
+            age, weight, creatinine, egfr
+        )
+
+        result = {
+            "drug_name": "Vancomycin",
+            "recommended_dose": round(dose),
+            "frequency": DRUG_PROFILES["vancomycin"]["frequency"],
+            "notes": DRUG_PROFILES["vancomycin"]["notes"],
+            "warnings": [],
+            "steps": [
+                f"ML predicted dose: {dose:.2f} mg",
+                f"Base dose (15 mg/kg): {base_dose:.2f} mg",
+                f"Adjustment factor: {adjustment:.2f}",
+                *explanation
+            ]
+        }
+    else:
+        result = calculate_dosage(drug_type, patient)
 
     # Persist dose log
     log = DoseLog(
