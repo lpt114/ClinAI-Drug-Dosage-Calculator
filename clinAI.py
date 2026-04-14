@@ -21,6 +21,8 @@ class Patient(db.Model):
     weight          = db.Column(db.Float)
     height          = db.Column(db.Float)
     medical_history = db.Column(db.Text)
+    creatinine      = db.Column(db.Float, nullable=True)   # mg/dL
+    egfr            = db.Column(db.Float, nullable=True)   # mL/min/1.73m²
     dose_logs       = db.relationship("DoseLog", backref="patient", lazy=True, order_by="DoseLog.timestamp.desc()")
 
 
@@ -263,7 +265,9 @@ def add_patient():
         allergies       = request.form.get("allergies", ""),
         weight          = float(request.form["weight"]),
         height          = float(request.form["height"]),
-        medical_history = request.form.get("medical_history", "")
+        medical_history = request.form.get("medical_history", ""),
+        creatinine      = float(request.form["creatinine"]) if request.form.get("creatinine") else None,
+        egfr            = float(request.form["egfr"]) if request.form.get("egfr") else None
     )
     db.session.add(new_patient)
     db.session.commit()
@@ -310,6 +314,8 @@ def edit_patient(patient_id):
         patient.weight          = float(request.form["weight"])
         patient.height          = float(request.form["height"])
         patient.medical_history = request.form.get("medical_history", "")
+        patient.creatinine      = float(request.form["creatinine"]) if request.form.get("creatinine") else None
+        patient.egfr            = float(request.form["egfr"]) if request.form.get("egfr") else None
         db.session.commit()
         return redirect(f"/patient/{patient_id}")
     return render_template("edit_patient.html", patient=patient)
@@ -328,11 +334,17 @@ def calculate_dose():
 
     #result = calculate_dosage(drug_type, patient)
     if drug_type == "vancomycin":
-        # Get ML inputs from form
+        # Get ML inputs from form (fall back to stored patient values)
         age = float(request.form.get("age"))
         weight = float(request.form.get("weight"))
-        creatinine = float(request.form.get("creatinine"))
-        egfr = float(request.form.get("egfr"))
+        creatinine_val = request.form.get("creatinine") or (str(patient.creatinine) if patient.creatinine else None)
+        egfr_val = request.form.get("egfr") or (str(patient.egfr) if patient.egfr else None)
+
+        if not creatinine_val or not egfr_val:
+            return render_template("error.html", message="Creatinine and eGFR are required for vancomycin dosing. Please update the patient record or enter values in the calculator.")
+
+        creatinine = float(creatinine_val)
+        egfr = float(egfr_val)
 
         dose, base_dose, adjustment, explanation = predict_dose(
             age, weight, creatinine, egfr
