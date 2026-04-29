@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from ml_model import predict_dose
+from ml_model import predict_dose, predict_drug_dose
 
 app = Flask(__name__)
 
@@ -332,39 +332,68 @@ def calculate_dose():
     if drug_type not in DRUG_PROFILES:
         return render_template("error.html", message=f"Unknown drug '{drug_type}'.")
 
-    #result = calculate_dosage(drug_type, patient)
+    # ── Resolve shared inputs (form values take priority over stored patient values) ──
+    age    = float(request.form.get("age")    or patient.age)
+    weight = float(request.form.get("weight") or patient.weight)
+
+    creatinine_val = request.form.get("creatinine") or (str(patient.creatinine) if patient.creatinine else None)
+    egfr_val       = request.form.get("egfr")       or (str(patient.egfr)       if patient.egfr       else None)
+
+    # ── All drugs now route through a Decision Tree ML model ──────────────────
     if drug_type == "vancomycin":
-        # Get ML inputs from form (fall back to stored patient values)
-        age = float(request.form.get("age"))
-        weight = float(request.form.get("weight"))
-        creatinine_val = request.form.get("creatinine") or (str(patient.creatinine) if patient.creatinine else None)
-        egfr_val = request.form.get("egfr") or (str(patient.egfr) if patient.egfr else None)
-
         if not creatinine_val or not egfr_val:
-            return render_template("error.html", message="Creatinine and eGFR are required for vancomycin dosing. Please update the patient record or enter values in the calculator.")
-
+            return render_template(
+                "error.html",
+                message="Creatinine and eGFR are required for Vancomycin dosing. "
+                        "Please update the patient record or enter values in the calculator."
+            )
         creatinine = float(creatinine_val)
-        egfr = float(egfr_val)
+        egfr       = float(egfr_val)
 
-        dose, base_dose, adjustment, explanation = predict_dose(
-            age, weight, creatinine, egfr
-        )
+        dose, base_dose, adjustment, explanation = predict_dose(age, weight, creatinine, egfr)
 
         result = {
-            "drug_name": "Vancomycin",
+            "drug_name":        "Vancomycin",
             "recommended_dose": round(dose),
-            "frequency": DRUG_PROFILES["vancomycin"]["frequency"],
-            "notes": DRUG_PROFILES["vancomycin"]["notes"],
-            "warnings": [],
+            "frequency":        DRUG_PROFILES["vancomycin"]["frequency"],
+            "notes":            DRUG_PROFILES["vancomycin"]["notes"],
+            "warnings":         [],
             "steps": [
-                f"ML predicted dose: {dose:.2f} mg",
-                f"Base dose (15 mg/kg): {base_dose:.2f} mg",
-                f"Adjustment factor: {adjustment:.2f}",
-                *explanation
-            ]
+                f"Decision Tree ML predicted dose: {dose:.2f} mg",
+                f"Base dose (15 mg/kg x {weight} kg): {base_dose:.2f} mg",
+                f"Adjustment factor applied: {adjustment:.2f}",
+                *explanation,
+            ],
         }
+
     else:
-        result = calculate_dosage(drug_type, patient)
+        # Acetaminophen, Ibuprofen, Amoxicillin, Metformin — all via Decision Tree ML
+        # Use safe defaults if creatinine/eGFR not provided (eGFR is the key renal signal)
+        creatinine = float(creatinine_val) if creatinine_val else 1.0
+        egfr       = float(egfr_val)       if egfr_val       else 90.0
+
+        ml = predict_drug_dose(drug_type, age, weight, creatinine, egfr)
+
+        # Contraindication / allergy check
+        allergies = (patient.allergies or "").lower()
+        history   = (patient.medical_history or "").lower()
+        combined  = allergies + " " + history
+        contras   = DRUG_PROFILES[drug_type].get("contraindications", [])
+        triggered = [c for c in contras if c in combined]
+        if triggered:
+            ml["warnings"].append(
+                f"Possible contraindication detected in patient record "
+                f"({', '.join(triggered)}). Verify allergy and medication history before proceeding."
+            )
+
+        result = {
+            "drug_name":        DRUG_PROFILES[drug_type]["name"],
+            "recommended_dose": ml["predicted_dose"],
+            "frequency":        DRUG_PROFILES[drug_type].get("frequency", "As directed"),
+            "notes":            DRUG_PROFILES[drug_type].get("notes", ""),
+            "warnings":         ml["warnings"],
+            "steps":            ml["steps"],
+        }
 
     # Persist dose log
     log = DoseLog(
