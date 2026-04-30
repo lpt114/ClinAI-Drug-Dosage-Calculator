@@ -126,8 +126,27 @@
 
     </div>
 
-    <input type="number" step="0.01" name="creatinine" placeholder="Creatinine (mg/dL) ">
-    <input type="number" step="0.1" name="egfr" placeholder="eGFR (mL/min/1.73m²) ">
+    <input type="number" step="0.01" name="creatinine" placeholder="Creatinine (mg/dL)">
+    <input type="number" step="0.1"  name="egfr"       placeholder="eGFR (mL/min/1.73m²)">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;">ALT (IU/L) <span style="color:var(--muted);font-size:11px;">liver · acetaminophen</span></label>
+        <input type="number" step="0.1" name="alt" placeholder="e.g. 25" class="input-sm">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;">AST (IU/L) <span style="color:var(--muted);font-size:11px;">liver · acetaminophen</span></label>
+        <input type="number" step="0.1" name="ast" placeholder="e.g. 30" class="input-sm">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;">Blood Glucose (mg/dL) <span style="color:var(--muted);font-size:11px;">metformin</span></label>
+        <input type="number" step="0.1" name="glucose" placeholder="e.g. 120" class="input-sm">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;">HbA1c (%) <span style="color:var(--muted);font-size:11px;">metformin</span></label>
+        <input type="number" step="0.1" name="hba1c" placeholder="e.g. 7.0" class="input-sm" max="20">
+      </div>
+    </div>
 
     <div style="margin-top:8px;">
       <button class="btn" type="submit">
