@@ -21,8 +21,12 @@ class Patient(db.Model):
     weight          = db.Column(db.Float)
     height          = db.Column(db.Float)
     medical_history = db.Column(db.Text)
-    creatinine      = db.Column(db.Float, nullable=True)   # mg/dL
-    egfr            = db.Column(db.Float, nullable=True)   # mL/min/1.73m²
+    creatinine      = db.Column(db.Float)   # mg/dL
+    egfr            = db.Column(db.Float)   # mL/min/1.73m²
+    alt             = db.Column(db.Float)   # IU/L  — liver (acetaminophen)
+    ast             = db.Column(db.Float)   # IU/L  — liver (acetaminophen)
+    glucose         = db.Column(db.Float)   # mg/dL — glycaemic (metformin)
+    hba1c           = db.Column(db.Float)   # %     — glycaemic (metformin)
     dose_logs       = db.relationship("DoseLog", backref="patient", lazy=True, order_by="DoseLog.timestamp.desc()")
 
 
@@ -267,7 +271,11 @@ def add_patient():
         height          = float(request.form["height"]),
         medical_history = request.form.get("medical_history", ""),
         creatinine      = float(request.form["creatinine"]) if request.form.get("creatinine") else None,
-        egfr            = float(request.form["egfr"]) if request.form.get("egfr") else None
+        egfr            = float(request.form["egfr"])        if request.form.get("egfr")        else None,
+        alt             = float(request.form["alt"])         if request.form.get("alt")         else None,
+        ast             = float(request.form["ast"])         if request.form.get("ast")         else None,
+        glucose         = float(request.form["glucose"])     if request.form.get("glucose")     else None,
+        hba1c           = float(request.form["hba1c"])       if request.form.get("hba1c")       else None
     )
     db.session.add(new_patient)
     db.session.commit()
@@ -315,7 +323,11 @@ def edit_patient(patient_id):
         patient.height          = float(request.form["height"])
         patient.medical_history = request.form.get("medical_history", "")
         patient.creatinine      = float(request.form["creatinine"]) if request.form.get("creatinine") else None
-        patient.egfr            = float(request.form["egfr"]) if request.form.get("egfr") else None
+        patient.egfr            = float(request.form["egfr"])        if request.form.get("egfr")        else None
+        patient.alt             = float(request.form["alt"])         if request.form.get("alt")         else None
+        patient.ast             = float(request.form["ast"])         if request.form.get("ast")         else None
+        patient.glucose         = float(request.form["glucose"])     if request.form.get("glucose")     else None
+        patient.hba1c           = float(request.form["hba1c"])       if request.form.get("hba1c")       else None
         db.session.commit()
         return redirect(f"/patient/{patient_id}")
     return render_template("edit_patient.html", patient=patient)
@@ -368,11 +380,23 @@ def calculate_dose():
 
     else:
         # Acetaminophen, Ibuprofen, Amoxicillin, Metformin — all via Decision Tree ML
-        # Use safe defaults if creatinine/eGFR not provided (eGFR is the key renal signal)
         creatinine = float(creatinine_val) if creatinine_val else 1.0
         egfr       = float(egfr_val)       if egfr_val       else 90.0
 
-        ml = predict_drug_dose(drug_type, age, weight, creatinine, egfr)
+        # Gender: stored as 'M'/'F', model needs 1/0
+        gender_str = (request.form.get("sex") or patient.sex or "F").strip().upper()
+        gender_int = 1 if gender_str == "M" else 0
+
+        # Optional drug-specific labs — form values first, then stored patient values, then safe defaults
+        alt     = float(request.form.get("alt")     or patient.alt     or 25.0)
+        ast     = float(request.form.get("ast")     or patient.ast     or 30.0)
+        glucose = float(request.form.get("glucose") or patient.glucose or 120.0)
+        hba1c   = float(request.form.get("hba1c")   or patient.hba1c   or 7.0)
+
+        ml = predict_drug_dose(
+            drug_type, age, weight, creatinine, egfr,
+            gender=gender_int, alt=alt, ast=ast, glucose=glucose, hba1c=hba1c
+        )
 
         # Contraindication / allergy check
         allergies = (patient.allergies or "").lower()
