@@ -1,30 +1,3 @@
-"""
-ml_model.py  –  Decision-Tree dosing models for all ClinAI drugs
------------------------------------------------------------------
-Vancomycin     : unchanged — trained on vancomycin_dosing_dataset_1200.csv
-
-Acetaminophen  : trained on MIMIC-IV derived dataset
-                 Features: age, gender, weight_kg, ALT, AST, creatinine, eGFR
-                 Real MIMIC rows (169) + clinically-labelled synthetic rows (800)
-                 drawn from the MIMIC-IV patient population distribution.
-
-Ibuprofen      : trained on MIMIC-IV derived dataset
-                 Features: age, gender, weight_kg, creatinine, eGFR
-                 Real MIMIC rows (22) + synthetic rows (500)
-
-Amoxicillin    : trained on MIMIC-IV derived dataset
-                 Features: age, gender, weight_kg, creatinine, eGFR
-                 Real MIMIC rows (6) + synthetic rows (500)
-
-Metformin      : trained on MIMIC-IV derived dataset
-                 Features: age, gender, weight_kg, creatinine, eGFR, glucose, HbA1c
-                 Real MIMIC rows (11) + synthetic rows (500)
-
-Synthetic augmentation uses patient-level distributions sampled directly from
-the MIMIC-IV demo database (age, weight, creatinine, ALT, AST, glucose, HbA1c),
-with doses labelled by clinically-validated rules anchored to the dose ranges
-observed in real MIMIC prescriptions.
-"""
 
 import os
 import pickle
