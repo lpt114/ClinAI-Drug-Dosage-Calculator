@@ -85,92 +85,32 @@
             <input type="number" name="egfr" step="0.1" min="0" class="input-sm" value="{{ patient.egfr if patient.egfr is not none else '' }}" placeholder="e.g. 90">
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="action-row" style="margin-top:8px;">
-      <button class="btn" type="submit">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Changes
-      </button>
-      <a class="btn btn-ghost btn-sm" href="/patient/{{ patient.id }}">Cancel</a>
-    </div>
-
-  </form>
-</div>
-
-{% endblock %}
-{% extends "base.html" %}
-
-{% block head %}<title>Edit Patient {{ patient.id }} — ClinAI</title>{% endblock %}
-
-{% block body %}
-
-<a href="/patient/{{ patient.id }}" class="back-link">
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-  Back to Patient
-</a>
-
-<p class="page-title">Edit Patient Record</p>
-<div class="pid-badge">ID #{{ patient.id }}</div>
-
-<div class="section-title">Update Details</div>
-<div class="card">
-  <form action="/patient/{{ patient.id }}/edit" method="post">
-
-    <div class="cols-2">
-      <div>
         <div class="form-group">
-          <label>Age</label>
+          <label>ALT (IU/L) <span style="font-size:11px;color:var(--muted);">— liver · acetaminophen</span></label>
           <div class="input-wrap">
-            <input type="number" name="age" min="0" max="120" class="input-sm" value="{{ patient.age }}" required>
+            <input type="number" name="alt" step="0.1" min="0" class="input-sm" value="{{ patient.alt if patient.alt is not none else '' }}" placeholder="e.g. 25">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Sex</label>
+          <label>AST (IU/L) <span style="font-size:11px;color:var(--muted);">— liver · acetaminophen</span></label>
           <div class="input-wrap">
-            <select name="sex" required style="max-width:180px;">
-              <option value="Male"   {% if patient.sex == 'Male'   %}selected{% endif %}>Male</option>
-              <option value="Female" {% if patient.sex == 'Female' %}selected{% endif %}>Female</option>
-            </select>
+            <input type="number" name="ast" step="0.1" min="0" class="input-sm" value="{{ patient.ast if patient.ast is not none else '' }}" placeholder="e.g. 30">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Weight (kg)</label>
+          <label>Blood Glucose (mg/dL) <span style="font-size:11px;color:var(--muted);">— metformin</span></label>
           <div class="input-wrap">
-            <input type="number" name="weight" step="0.1" class="input-sm" value="{{ patient.weight }}" required>
+            <input type="number" name="glucose" step="0.1" min="0" class="input-sm" value="{{ patient.glucose if patient.glucose is not none else '' }}" placeholder="e.g. 120">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Height (cm)</label>
+          <label>HbA1c (%) <span style="font-size:11px;color:var(--muted);">— metformin</span></label>
           <div class="input-wrap">
-            <input type="number" name="height" step="0.1" class="input-sm" value="{{ patient.height }}" required>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="form-group">
-          <label>Diagnosis</label>
-          <div class="input-wrap">
-            <input type="text" name="diagnosis" value="{{ patient.diagnosis }}" required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Allergies</label>
-          <div class="input-wrap">
-            <input type="text" name="allergies" value="{{ patient.allergies or '' }}">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Medical History</label>
-          <div class="input-wrap">
-            <textarea name="medical_history" style="width:100%;">{{ patient.medical_history or '' }}</textarea>
+            <input type="number" name="hba1c" step="0.1" min="0" max="20" class="input-sm" value="{{ patient.hba1c if patient.hba1c is not none else '' }}" placeholder="e.g. 7.0">
           </div>
         </div>
       </div>
