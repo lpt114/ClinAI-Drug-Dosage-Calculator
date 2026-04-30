@@ -52,6 +52,51 @@
           {% endif %}
         </td>
       </tr>
+      <tr>
+        <td>ALT</td>
+        <td>
+          {% if patient.alt is not none %}
+            {{ patient.alt }} IU/L
+            {% if patient.alt > 120 %}<span class="tag tag-warn" style="margin-left:8px;">Elevated (&gt;3× ULN)</span>{% endif %}
+          {% else %}
+            <span style="color:var(--muted);">Not recorded</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>AST</td>
+        <td>
+          {% if patient.ast is not none %}
+            {{ patient.ast }} IU/L
+            {% if patient.ast > 120 %}<span class="tag tag-warn" style="margin-left:8px;">Elevated (&gt;3× ULN)</span>{% endif %}
+          {% else %}
+            <span style="color:var(--muted);">Not recorded</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>Blood Glucose</td>
+        <td>
+          {% if patient.glucose is not none %}
+            {{ patient.glucose }} mg/dL
+            {% if patient.glucose > 180 %}<span class="tag tag-warn" style="margin-left:8px;">High</span>{% endif %}
+          {% else %}
+            <span style="color:var(--muted);">Not recorded</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>HbA1c</td>
+        <td>
+          {% if patient.hba1c is not none %}
+            {{ patient.hba1c }}%
+            {% if patient.hba1c > 8 %}<span class="tag tag-warn" style="margin-left:8px;">Poorly controlled</span>
+            {% elif patient.hba1c > 7 %}<span class="tag tag-warn" style="margin-left:8px;">Above target</span>{% endif %}
+          {% else %}
+            <span style="color:var(--muted);">Not recorded</span>
+          {% endif %}
+        </td>
+      </tr>
     </tbody>
   </table>
 
@@ -76,16 +121,59 @@
 <div class="card">
   <form action="/calculate_dose" method="post">
     <input type="hidden" name="patient_id" value="{{ patient.id }}">
-    <input type="number" name="age" value="{{ patient.age }}" hidden>
+    <input type="number" name="age"    value="{{ patient.age }}"    hidden>
     <input type="number" step="0.1" name="weight" value="{{ patient.weight }}" hidden>
+    <input type="text"   name="sex"    value="{{ patient.sex }}"    hidden>
 
-    <input type="number" step="0.01" name="creatinine" placeholder="Creatinine (mg/dL)" value="{{ patient.creatinine if patient.creatinine is not none else '' }}" required>
-    <input type="number" step="0.1" name="egfr" placeholder="eGFR (mL/min/1.73m²)" value="{{ patient.egfr if patient.egfr is not none else '' }}" required>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Creatinine (mg/dL)</label>
+        <input type="number" step="0.01" name="creatinine" placeholder="e.g. 1.0"
+               value="{{ patient.creatinine if patient.creatinine is not none else '' }}" required>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">eGFR (mL/min/1.73m²)</label>
+        <input type="number" step="0.1" name="egfr" placeholder="e.g. 90"
+               value="{{ patient.egfr if patient.egfr is not none else '' }}" required>
+      </div>
+    </div>
+
+    <!-- Liver labs — shown for Acetaminophen -->
+    <div id="liver-fields" style="display:none;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Liver Function (Acetaminophen)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">ALT (IU/L)</label>
+          <input type="number" step="0.1" name="alt" placeholder="e.g. 25"
+                 value="{{ patient.alt if patient.alt is not none else '' }}">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">AST (IU/L)</label>
+          <input type="number" step="0.1" name="ast" placeholder="e.g. 30"
+                 value="{{ patient.ast if patient.ast is not none else '' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Glycaemic labs — shown for Metformin -->
+    <div id="glucose-fields" style="display:none;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Glycaemic Control (Metformin)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Blood Glucose (mg/dL)</label>
+          <input type="number" step="0.1" name="glucose" placeholder="e.g. 120"
+                 value="{{ patient.glucose if patient.glucose is not none else '' }}">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">HbA1c (%)</label>
+          <input type="number" step="0.1" name="hba1c" placeholder="e.g. 7.0"
+                 value="{{ patient.hba1c if patient.hba1c is not none else '' }}">
+        </div>
+      </div>
+    </div>
 
     <div class="form-group" style="position:relative;">
-      <label>
-        Select Drug
-      </label>
+      <label>Select Drug</label>
       <div class="input-wrap" style="position:relative;width:100%;">
         <input type="text" id="drug_search" placeholder="Type to search drugs…" autocomplete="off" required style="max-width:360px;">
         <select name="drug_type" id="drug_select" style="display:none;">
@@ -110,6 +198,21 @@
       </span>
     </div>
   </form>
+
+  <script>
+    // Show/hide drug-specific lab fields based on selected drug
+    function updateLabFields(drugKey) {
+      document.getElementById('liver-fields').style.display  = (drugKey === 'acetaminophen') ? 'block' : 'none';
+      document.getElementById('glucose-fields').style.display = (drugKey === 'metformin')     ? 'block' : 'none';
+    }
+    // Hook into the existing drug_select hidden select that the search widget writes to
+    const sel = document.getElementById('drug_select');
+    if (sel) {
+      const obs = new MutationObserver(() => updateLabFields(sel.value));
+      obs.observe(sel, { attributes: true, childList: true, subtree: true });
+      sel.addEventListener('change', () => updateLabFields(sel.value));
+    }
+  </script>
 </div>
 
 {% if dosage_result %}
