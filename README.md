@@ -55,25 +55,39 @@ All drug dosing predictions are powered by machine learning models trained on cl
 ```
 ClinAI-Drug-Dosage-Calculator/
 │
-├── clinAI.py                         # Main Flask app — routes, DB models, dosage engine
-├── ml_model.py                       # ML model training + prediction (Vancomycin)
-├── vancomycin_dosing_dataset_1200.csv  # Training dataset for the ML model
+├── clinAI.py # Main Flask app — routes, DB models, ML integration
+├── ml_model.py # ML model training + prediction logic
+├── ML Model Training and Testing.py # Standalone model training/evaluation script
 │
-├── templates/                        # Jinja2 HTML templates
-│   ├── index.html                    # Home page
-│   ├── patients.html                 # Patient list
-│   ├── patient.html                  # Individual patient view + dose calculator
-│   ├── edit_patient.html             # Edit patient form
-│   ├── drug.html                     # Drug profile info page
-│   └── error.html                    # Error display page
+├── templates/ # Jinja2 HTML templates
+│ ├── base.html
+│ ├── index.html
+│ ├── patients.html
+│ ├── patient.html
+│ ├── edit_patient.html
+│ ├── drug.html
+│ └── error.html
 │
-├── static/                           # CSS and static assets
-├── instance/                         # Runtime files (SQLite DB created here)
+├── static/ # Frontend styling and assets
+│ ├── styles.css
+│ ├── styles.css.map
+│ └── styles.scss
 │
-├── ARCHITECTURE.md                   # Architecture notes
-├── ML Model Training and Testing.py  # Standalone ML training/testing script
-├── ClinAIV1.zip                      # Archived V1 source
-└── mimic-iv-clinical-database-demo-2.2.zip  # Reference clinical dataset
+├── instance/ # Runtime database (auto-created)
+│ └── clinai.db
+│
+├── acetaminophen_dosing_dataset.csv
+├── amoxicillin_dosing_dataset.csv
+├── ibuprofen_dosing_dataset.csv
+├── metformin_dosing_dataset.csv
+├── vancomycin_dosing_dataset_1200.csv
+│
+├── mimic-iv-clinical-database-demo-2.2.zip # Reference dataset
+│
+├── ARCHITECTURE.md
+├── SPRINT2_ACCEPTANCE.md
+├── README.md
+├── ClinAIV1.zip # Archived version
 ```
 
 ---
